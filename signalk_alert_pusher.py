@@ -13,8 +13,15 @@ import math
 from  aws_push import push_to_amazon_sns
 import push_server
 
+#SignalK Server
 HOST='localhost'
 PORT=3000
+
+#Alarm Thresholds
+excesive_attitute_alarm = 5.0
+excesive_wind_alarm = 20.0
+high_wind_alarm = 10.0
+shallow_depth_alarm = 8.0
 
 last_alarm_times = {}
 last_notifications = {}
@@ -28,11 +35,6 @@ battery_status_path = 'electrical.batteries.%d.voltage.value'
 wind_path = 'environment.wind.speedApparent.value'
 roll_path = 'navigation.attitude.roll'
 pitch_path = 'navigation.attitude.pitch'
-
-excesive_attitute_alarm = 5.0
-excesive_wind_alarm = 20.0
-high_wind_alarm = 10.0
-shallow_depth_alarm = 8.0
 
 notification_data = {
     'engineOverTemperature': {
