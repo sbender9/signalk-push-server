@@ -25,3 +25,5 @@ Copy all three .py files to your server and run the two servers in the backgroun
 
 In WilhelmSK, connect to your boat and go to the Notificaion settings. Check the "Enable Notifications" box. (You must be currently connected to your boat for this to work).
 This currently requires the WilhelmSK Beta (1.1.0 build 9)
+
+You can also get autopilot control and Raymarine/Seatalk Alarms by copying the code in ./canboat and ./signalk-server-node into those projects. Make sure you have their lates code from git hub.
