@@ -1,5 +1,5 @@
 # signalk-push-server
-A server that pushes notifications to [WilhelmSK](https://itunes.apple.com/us/app/wilhelmsk/id1150499484?mt=8) based on SignalK data to Amazon SNS
+A server that pushes notifications to [WilhelmSK](https://itunes.apple.com/us/app/wilhelmsk/id1150499484?mt=8) based on SignalK data via Amazon SNS
 
 It currently has excessive pitch, roll, wind and shallow depth alarms. Also sends any SignalK notifications out.
 
