@@ -17,6 +17,12 @@ high_wind_alarm = 10.0
 shallow_depth_alarm = 8.0
 ```
 
+Install Amazon's [Boto 3](https://aws.amazon.com/sdk-for-python/) python API's:
+
+```
+pip install boto3
+```
+
 Copy all three .py files to your server and run the two servers in the background:
 ```
 /path/push_server.py > /dev/null 2>&1 &
