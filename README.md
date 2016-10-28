@@ -1,6 +1,8 @@
 # signalk-push-server
 A server that pushes notifications to [WilhelmSK](https://itunes.apple.com/us/app/wilhelmsk/id1150499484?mt=8) based on SignalK data via Amazon SNS
 
+Hopefully, this is all temporary. Work is being done to get this integrated into the SignalK standard and into signalk-server-node. I'm also working with the iKommunicate folks to see if anything can be done there.
+
 It currently has excessive pitch, roll, wind and shallow depth alarms. Also sends any SignalK notifications out.
 
 Modify signalk_alert_pusher.py to change configuration:
