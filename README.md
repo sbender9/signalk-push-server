@@ -27,3 +27,5 @@ In WilhelmSK, connect to your boat and go to the Notificaion settings. Check the
 This currently requires the WilhelmSK Beta (1.1.0 build 9)
 
 You can also get autopilot control and Raymarine/Seatalk Alarms by copying the code in ./canboat and ./signalk-server-node into those projects. Make sure you have their latest code from git hub.
+
+Please note that autopilot control is still experimental, do not rely on WilhelmSK alone to control your autopilot and please be safe!
