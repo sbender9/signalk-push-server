@@ -34,6 +34,6 @@ Your signalk-node-server/bin/actisense-serial-n2kd should look something like:
 nc -lk  5000 | actisense-serial /dev/ttyUSB0 | analyzer -json -si
 ```
 
-***Please note that this allows anyone with access to port 5000 on your server to send NMEA 2000 messages on your network
+***Please note that this allows anyone with access to port 5000 on your server to send NMEA 2000 messages on your network***
 
-Autopilot control is still experimental, do not rely on WilhelmSK alone to control your autopilot and please be safe!***
+***Autopilot control is still experimental, do not rely on WilhelmSK alone to control your autopilot and please be safe!***
