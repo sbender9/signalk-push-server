@@ -5,7 +5,7 @@ import argparse
 
 def push_to_amazon_sns(title, body, targetArn, region, accessKey,
                        secretAccessKey, signalKPath,
-                       category=None, sound='default'):
+                       uuid, category=None, sound='default'):
     client = boto3.client('sns',
                           aws_access_key_id=accessKey,
                           aws_secret_access_key=secretAccessKey,
@@ -18,6 +18,8 @@ def push_to_amazon_sns(title, body, targetArn, region, accessKey,
         aps['aps']['title'] = title
     if signalKPath:
         aps['path'] = signalKPath
+    if uuid:
+        aps['uuid'] = uuid
         
     msg = {
         'default': body,

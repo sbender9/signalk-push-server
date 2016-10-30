@@ -14,7 +14,8 @@ from urlparse import urlparse, parse_qs
 #     "accessKey": "KEY", 
 #     "deviceName": "Scott Bender's iPhone 6", 
 # "secretAccessKey": "SECRET", 
-#     "targetArn": "arn:aws:sns:us-east-1:1234:endpoint/APNS_SANDBOX/NOT_A_REAL_ARN"
+#     "targetArn": "arn:aws:sns:us-east-1:1234:endpoint/APNS_SANDBOX/NOT_A_REAL_ARN",
+#     "uuid": "uuid"
 # }
 
 HOST_NAME = ''
@@ -98,6 +99,7 @@ class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             data = s.rfile.read(int(s.headers['Content-Length']))
             dict = json.loads(data)
             devices = read_devices()
+            #print dict['targetArn']
             if devices.has_key(dict['targetArn']):
                 s.send_response(200)
             else:

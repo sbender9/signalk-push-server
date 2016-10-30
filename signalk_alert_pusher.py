@@ -218,13 +218,18 @@ def check_for_alarms(vessel):
             path = alarm['path']
         else:
             path = None
-            
+
         for device in devices.values():
+            uuid = None
+            if device.has_key('uuid'):
+                uuid = device['uuid']
+
             push_to_amazon_sns(alarm['title'], alarm['body'],
                                device['targetArn'], 'us-east-1',
                                device['accessKey'],
                                device['secretAccessKey'],
                                path,
+                               uuid,
                                category)
 
         if alarm.has_key('category'):
