@@ -25,7 +25,9 @@ Install Amazon's [Boto 3](https://aws.amazon.com/sdk-for-python/) python API's:
 pip install boto3
 ```
 
-Copy all of the .py files to your server and run the two servers in the background:
+Copy all of the .py files to your server.
+Make sure that n2k_writer.py is executable and in your path.
+Run the two servers in the background. 
 ```
 /path/push_server.py > /dev/null 2>&1 &
 /path/signalk_alert_pusher.py > /dev/null 2>&1 &
