@@ -25,7 +25,7 @@ Install Amazon's [Boto 3](https://aws.amazon.com/sdk-for-python/) python API's:
 pip install boto3
 ```
 
-Copy all three .py files to your server and run the two servers in the background:
+Copy all of the .py files to your server and run the two servers in the background:
 ```
 /path/push_server.py > /dev/null 2>&1 &
 /path/signalk_alert_pusher.py > /dev/null 2>&1 &
@@ -39,7 +39,7 @@ You can also get NMEA 2000 Raymarine autopilot control and Raymarine/Seatalk Ala
 Your signalk-node-server/bin/actisense-serial-n2kd should look something like:
 
 ```
-nc -lk  5000 | actisense-serial /dev/ttyUSB0 | analyzer -json -si
+n2k_writer.py 2>/dev/null | actisense-serial /dev/ttyUSB0 | analyzer -json -si
 ```
 
 ***Please note that this allows anyone with access to port 5000 on your server to send NMEA 2000 messages on your network***
