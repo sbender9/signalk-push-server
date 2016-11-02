@@ -1,0 +1,22 @@
+{
+  "anchor": {
+    "units": "ft",
+    "title": "Anchor Alarm"
+  }, 
+  "excessive_attitute": {
+    "title": "Excessive Attitute",
+    "units": "deg"
+  }, 
+  "excessive_wind": {
+    "title": "Excessive Wind",
+    "units": "knots"
+  }, 
+  "high_wind": {
+    "title": "High Wind",
+    "units": "knots"
+  }, 
+  "shallow_depth": {
+    "title": "Shallow Depth",
+    "units": "ft"
+  }
+}

@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import time
+import math
 import socket
 import json
 import sys
@@ -16,12 +17,6 @@ import push_server
 #SignalK Server
 HOST='localhost'
 PORT=3000
-
-#Alarm Thresholds
-excesive_attitute_alarm = 5.0
-excesive_wind_alarm = 20.0
-high_wind_alarm = 10.0
-shallow_depth_alarm = 8.0
 
 last_alarm_times = {}
 last_notifications = {}
@@ -51,6 +46,18 @@ notification_data = {
         'msg': 'A battery voltage is low. Starter bank is %0.2f. House bank is %0.2f'
         }
 }
+
+def deg2rad(deg):
+    return deg * (math.pi/180)
+
+def calc_distance(lat1, long1, lat2, long2):
+    dlon = deg2rad(long2 - long1)
+    dlat = deg2rad(lat2 - lat1)
+    a = math.sin(dlat/2) * math.sin(dlat/2) + math.cos(deg2rad(lat1)) * math.cos(deg2rad(lat2)) * math.sin(dlon/2) * math.sin(dlon/2)
+    c = 2 * math.atan2( math.sqrt(a), math.sqrt(1-a) )
+    R = 6371.0
+    d = R * c
+    return d
 
 def meters_to_feet(val):
     return val * 3.28084
@@ -83,35 +90,72 @@ def make_alarm(title, body, type=None, category=None):
 
     return alarm
 
-def check_depth(vessel):
-    mdepth = get_from_path(depth_path, vessel)
-    offset = get_from_path(offset_path, vessel)
+def check_anchor(vessel, alarm_config):
+    conf = alarm_config.get('anchor', None)
 
-    mdepth = mdepth + offset
-    fdepth = meters_to_feet(mdepth)
+    if conf != None and conf['enabled'] == 1:
+        position = push_server.read_anchor_position()
+       
+        radius = conf['value']
+        lat1 = get_from_path('navigation.position.latitude', vessel)
+        long1 = get_from_path('navigation.position.longitude', vessel)
 
-    #print 'depth', fdepth
+        if len(position) != 2:
+            position['latitude'] = lat1
+            position['longitude'] = long1
+            if last_alarm_times.has_key('Anchor Alarm'):
+                del last_alarm_times['Anchor Alarm']
+            push_server.save_anchor_position(position)
+            return []
 
-    if fdepth < shallow_depth_alarm:
-        return [make_alarm('Shallow Depth', 'Depth is %0.2f ft' 
-                           % fdepth)]
+        lat2 = position['latitude']
+        long2 = position['longitude']
+#        lat2 = get_from_path('navigation.courseGreatCircle.nextPoint.position.latitude', vessel)
+#        long2 = get_from_path('navigation.courseGreatCircle.nextPoint.position.longitude', vessel)
+
+        feet = calc_distance(lat1, long1, lat2, long2) * 3280.84
+        
+        if feet > radius:
+            return [make_alarm('Anchor Alarm', 'The anchor is %0.2f ft away' 
+                               % feet)]
     return []
 
-def check_wind(vessel):
+def check_depth(vessel, alarm_config):
+    conf = alarm_config.get('shallow_depth',None)
+    if conf != None and conf['enabled'] == 1:
+        shallow_depth_alarm = conf['value']
+        mdepth = get_from_path(depth_path, vessel)
+        offset = get_from_path(offset_path, vessel)
+
+        mdepth = mdepth + offset
+        fdepth = meters_to_feet(mdepth)
+
+        #print 'depth', fdepth
+
+        if fdepth < shallow_depth_alarm:
+            return [make_alarm('Shallow Depth', 'Depth is %0.2f ft' 
+                               % fdepth)]
+    return []
+
+def check_wind(vessel, alarm_config):
     global last_wind
     speed = get_from_path(wind_path, vessel)
     kspeed = ms_to_knots(speed)
     #print 'wind', kspeed
     last_wind = kspeed
-    if kspeed > excesive_wind_alarm:
+
+    excessive_wind = alarm_config.get('excessive_wind',None)
+    high_wind = alarm_config.get('high_wind',None)
+    
+    if excessive_wind != None and excessive_wind['enabled'] == 1 and kspeed > excessive_wind['value']:
         return [make_alarm('Excessive Wind', 'Wind Speed is %0.2f kts' 
                            % kspeed, 'excessive_wind')]
-    elif kspeed > high_wind_alarm:
+    elif high_wind != None and high_wind['enabled'] == 1 and kspeed > high_wind['value']:
         return [make_alarm('High Wind', 'Wind Speed is %0.2f kts' 
                            % kspeed, 'high_wind')]
     return []
 
-def check_attitude(vessel):
+def check_attitude(vessel, alarm_config):
     global last_pitch, last_roll
     roll = get_from_path(roll_path, vessel)
     pitch = get_from_path(pitch_path, vessel)
@@ -124,13 +168,16 @@ def check_attitude(vessel):
     #print 'attitude', pitch, roll
     alarms = []
 
-    if roll > excesive_attitute_alarm:
-        alarms.append(make_alarm('Excessive Attitude', 'Roll is %0.2f' % roll,
-                                 'Roll'))
+    conf = alarm_config.get('excessive_attitute',None)
 
-    if pitch > excesive_attitute_alarm:
-        alarms.append(make_alarm('Excessive Attitude', 'Pitch is %0.2f' 
-                                 % pitch, 'Pitch'))
+    if conf != None and conf['enabled'] == 1:
+        if roll > conf['value']:
+            alarms.append(make_alarm('Excessive Attitude', 'Roll is %0.2f' % roll,
+                                     'Roll'))
+
+        if pitch > conf['value']:
+            alarms.append(make_alarm('Excessive Attitude', 'Pitch is %0.2f' 
+                                     % pitch, 'Pitch'))
 
     return alarms
 
@@ -177,13 +224,17 @@ def check_for_notifications(vessel):
 def check_for_alarms(vessel):
     alarms = []
 
+    alarm_config = push_server.read_alarm_config()
+
     alarms.extend(check_for_notifications(vessel))
 
-    #alarms.extend(check_depth(vessel))
+    alarms.extend(check_depth(vessel, alarm_config))
 
-    alarms.extend(check_wind(vessel))
+    alarms.extend(check_anchor(vessel, alarm_config))
 
-    alarms.extend(check_attitude(vessel))
+    alarms.extend(check_wind(vessel, alarm_config))
+
+    alarms.extend(check_attitude(vessel, alarm_config))
 
     print "%s - Wind: %0.2f Pitch: %0.2f Roll: %0.2f" % (time.asctime(time.localtime(time.time())), last_wind, last_pitch, last_roll)
 

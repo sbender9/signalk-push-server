@@ -1,0 +1,22 @@
+{
+  "anchor": {
+    "enabled": false, 
+    "value": 200
+  }, 
+  "excessive_attitute": {
+    "enabled": true, 
+    "value": 5
+  }, 
+  "excessive_wind": {
+    "enabled": true, 
+    "value": 30
+  }, 
+  "high_wind": {
+    "enabled": true, 
+    "value": 21
+  }, 
+  "shallow_depth": {
+    "enabled": true, 
+    "value": 6
+  }
+}

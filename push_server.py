@@ -2,6 +2,7 @@
 
 import time
 import BaseHTTPServer
+from SocketServer import ThreadingMixIn
 import socket
 import json
 import os
@@ -22,6 +23,9 @@ HOST_NAME = ''
 PORT_NUMBER = 3120 
 devices_file = 'registerd_devices.json'
 history_file = 'alarm_history.json'
+alarm_config_file = 'alarm_config.json'
+anchor_position_file = 'anchor_position.json'
+supported_alarms_file = 'supported_alarms.json'
 
 def we_are_frozen():
     # All of the modules are built-in to the interpreter, e.g., by py2exe
@@ -34,27 +38,54 @@ def module_path():
     return os.path.dirname(unicode(__file__, encoding))
 
 def read_history():
-    f = open(os.path.join(module_path(), history_file))
-    dict = json.loads(f.read())
-    f.close()
-    return dict
+    return read_json_array(history_file)
 
 def save_history(history):
-    f = open(os.path.join(module_path(), history_file), "w")
-    f.write(json.dumps(history, sort_keys=True, indent=2))
-    f.close()
+    save_json(history_file, history)
 
 def read_devices():
-    f = open(os.path.join(module_path(), devices_file))
+    return read_json_dict(devices_file)
+
+def save_devices(devices):
+    save_json(devices_file, devices)
+
+def read_alarm_config():
+    return read_json_dict(alarm_config_file)
+
+def save_alarm_config(config):
+    save_json(alarm_config_file, config)
+
+def read_anchor_position():
+    return read_json_dict(anchor_position_file)
+
+def save_anchor_position(position):
+    return save_json(anchor_position_file, position)
+
+def read_supported_alarms():
+    return read_json_dict(supported_alarms_file)
+
+def read_json_array(file_name):
+    if not os.path.exists(os.path.join(module_path(), file_name)):
+        return []
+    return read_json(file_name)
+
+def read_json_dict(file_name):
+    if not os.path.exists(os.path.join(module_path(), file_name)):
+        return {}
+    return read_json(file_name)
+
+def read_json(file_name):
+    f = open(os.path.join(module_path(), file_name))
     dict = json.loads(f.read())
     f.close()
     return dict
 
-def save_devices(devices):
-    f = open(os.path.join(module_path(), devices_file), "w")
-    f.write(json.dumps(devices, sort_keys=True, indent=2))
+def save_json(file_name, json_data):
+    f = open(os.path.join(module_path(), file_name), "w")
+    f.write(json.dumps(json_data, sort_keys=True, indent=2))
     f.close()
 
+    
 class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     def do_HEAD(s):
         s.send_response(200)
@@ -73,6 +104,18 @@ class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             s.send_header("Content-type", "text/json")
             s.end_headers()
             s.wfile.write(json.dumps(history))
+        elif s.path == '/get_alarm_config':
+            history = read_alarm_config()
+            s.send_response(200)
+            s.send_header("Content-type", "text/json")
+            s.end_headers()
+            s.wfile.write(json.dumps(history))
+        elif s.path == '/get_supported_alarms':
+            history = read_supported_alarms()
+            s.send_response(200)
+            s.send_header("Content-type", "text/json")
+            s.end_headers()
+            s.wfile.write(json.dumps(history))                        
         else:
             s.send_response(404)
             s.end_headers()
@@ -105,12 +148,29 @@ class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             else:
                 s.send_response(404)
             s.end_headers()
+        elif s.path == '/set_alarm_config':
+            data = s.rfile.read(int(s.headers['Content-Length']))
+            dict = json.loads(data)
+            config = read_alarm_config()
+            config.update(dict)
+            save_alarm_config(config)
+
+            if config.has_key('anchor') and config['anchor']['enabled'] == 0:
+                save_anchor_position({})
+            
+            s.send_response(200)
+            s.end_headers()
         else:
             s.send_response(404)
             s.end_headers()                                                
-            
+
+class ThreadedHTTPServer(ThreadingMixIn, BaseHTTPServer.HTTPServer):
+    """ This class allows to handle requests in separated threads.
+    No further content needed, don't touch this. """
+    
 if __name__ == '__main__':
-    server_class = BaseHTTPServer.HTTPServer
+    #server_class = BaseHTTPServer.HTTPServer
+    server_class = ThreadedHTTPServer
     httpd = server_class((HOST_NAME, PORT_NUMBER), MyHandler)
     print time.asctime(), "Server Starts - %s:%s" % (HOST_NAME, PORT_NUMBER)
     try:
