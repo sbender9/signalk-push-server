@@ -3,21 +3,7 @@ A server that pushes notifications to [WilhelmSK](https://itunes.apple.com/us/ap
 
 Hopefully, this is all temporary. Work is being done to get this integrated into the SignalK standard and into signalk-server-node. I'm also working with the iKommunicate folks to see if anything can be done there.
 
-It currently has excessive pitch, roll, wind and shallow depth alarms. Also sends any SignalK notifications out.
-
-Modify signalk_alert_pusher.py to change configuration:
-
-```python
-#SignalK Server
-HOST='localhost'
-PORT=3000
-
-#Alarm Thresholds
-excesive_attitute_alarm = 5.0
-excesive_wind_alarm = 20.0
-high_wind_alarm = 10.0
-shallow_depth_alarm = 8.0
-```
+It currently has anchor, excessive pitch, roll, wind and shallow depth alarms and also sends any SignalK notifications out.
 
 Install tornada and Amazon's [Boto 3](https://aws.amazon.com/sdk-for-python/) python API's:
 
