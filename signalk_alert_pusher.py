@@ -83,15 +83,16 @@ def load_json(host, port, path=""):
         return res.read()
 
 def get_from_path(element, json):
-    return reduce(lambda d, key: d[key], element.split('.'), json)
+    try:
+        return reduce(lambda d, key: d[key], element.split('.'), json)
+    except exceptions.KeyError:
+        return None
 
-def make_alarm(title, body, type=None, category=None, path=None, isGenerated=False):
+def make_alarm(title, body, state, category=None, path=None, isGenerated=False):
     alarm = {}
     alarm['title'] = title
     alarm['body'] = body
-    if not type:
-        type = title
-    alarm['type'] = type
+    alarm['state'] = state
     if category:
         alarm['category'] = category
     if path:
@@ -108,6 +109,9 @@ def check_anchor(vessel, alarm_config):
         radius = conf['value']
         lat1 = get_from_path('navigation.position.latitude', vessel)
         long1 = get_from_path('navigation.position.longitude', vessel)
+
+        if not lat1 or not long1:
+            return None
 
         if len(position) != 2:
             position['latitude'] = lat1
@@ -126,8 +130,9 @@ def check_anchor(vessel, alarm_config):
         
         if feet > radius:
             return [make_alarm('Anchor Alarm', 'The anchor is %0.2f ft away' 
-                               % feet, path='notifications.anchorDrift', isGenerated=True)]
-    return []
+                               % feet, 'alarm', path='notifications.anchorDrift',
+                               isGenerated=True)]
+    return None
 
 def check_depth(vessel, alarm_config):
     conf = alarm_config.get('shallow_depth',None)
@@ -136,6 +141,9 @@ def check_depth(vessel, alarm_config):
         mdepth = get_from_path(depth_path, vessel)
         offset = get_from_path(offset_path, vessel)
 
+        if not mdepth or not offset:
+            return None
+
         mdepth = mdepth + offset
         fdepth = meters_to_feet(mdepth)
 
@@ -143,12 +151,17 @@ def check_depth(vessel, alarm_config):
 
         if fdepth < shallow_depth_alarm:
             return [make_alarm('Shallow Depth', 'Depth is %0.2f ft' 
-                               % fdepth, path='notifications.shallowDepth', isGenerated=True)]
-    return []
+                               % fdepth, 'alarm', path='notifications.shallowDepth',
+                               isGenerated=True)]
+    return None
 
 def check_high_wind(vessel, alarm_config):
     global last_wind
     speed = get_from_path(wind_path, vessel)
+
+    if not speed:
+        return None
+    
     kspeed = ms_to_knots(speed)
     #print 'wind', kspeed
     last_wind = kspeed
@@ -157,55 +170,67 @@ def check_high_wind(vessel, alarm_config):
     
     if high_wind != None and high_wind['enabled'] == 1 and kspeed > high_wind['value']:
       return [make_alarm('High Wind', 'Wind Speed is %0.2f kts' 
-                         % kspeed, 'high_wind', path='notifications.highWind', isGenerated=True)]
-    return []
+                         % kspeed, 'alert', path='notifications.highWind',
+                         isGenerated=True)]
+    return None
 
 def check_excessive_wind(vessel, alarm_config):
     speed = get_from_path(wind_path, vessel)
+
+    if not speed:
+        return None
+    
     kspeed = ms_to_knots(speed)
 
     excessive_wind = alarm_config.get('excessive_wind',None)
     
     if excessive_wind != None and excessive_wind['enabled'] == 1 and kspeed > excessive_wind['value']:
         return [make_alarm('Excessive Wind', 'Wind Speed is %0.2f kts' 
-                           % kspeed, 'excessive_wind', path='notifications.excessiveWind', isGenerated=True)]
-    return []
+                           % kspeed, 'alarm', path='notifications.excessiveWind',
+                           isGenerated=True)]
+    return None
 
 def check_roll(vessel, alarm_config):
     global last_roll
     roll = get_from_path(roll_path, vessel)
 
+    if not roll:
+        return None
+    
     roll = math.degrees(roll)
     
     last_roll = roll
-    alarms = []
 
     conf = alarm_config.get('excessive_attitute',None)
 
     if conf != None and conf['enabled'] == 1:
         if roll > conf['value']:
-            alarms.append(make_alarm('Excessive Attitude', 'Roll is %0.2f' % roll,
-                                     'Roll', path='notifications.excessiveRoll', isGenerated=True))
+            return [ make_alarm('Excessive Attitude', 'Roll is %0.2f' % roll,
+                                'alert', path='notifications.excessiveRoll',
+                                isGenerated=True) ]
 
-    return alarms
+    return None
 
 def check_pitch(vessel, alarm_config):
     global last_pitch
     pitch = get_from_path(pitch_path, vessel)
 
+    if not pitch:
+        return None
+    
     pitch = math.degrees(pitch)
     
     last_pitch = pitch
-    alarms = []
 
     conf = alarm_config.get('excessive_attitute',None)
 
     if conf != None and conf['enabled'] == 1:
         if pitch > conf['value']:
-            alarms.append(make_alarm('Excessive Attitude', 'Pitch is %0.2f' 
-                                     % pitch, 'Pitch', path='notifications.excessivePitch', isGenerated=True))
+            return [make_alarm('Excessive Attitude', 'Pitch is %0.2f' 
+                               % pitch, 'alert', path='notifications.excessivePitch',
+                               isGenerated=True)]
 
-    return alarms
+    return None
 
 def check_for_notifications(vessel):
     alarms = []
@@ -222,6 +247,8 @@ def check_for_notifications(vessel):
                 if notif.has_key('$source') and notif['$source'] == 'alerts_pusher.XX':
                     continue
                 
+                path = 'notifications.%s' % key                        
+
                 if notif['state'] != 'normal':
                     msg = notif['message']
 
@@ -231,8 +258,7 @@ def check_for_notifications(vessel):
                         cat = 'advance_waypoint'
                     else:
                         cat = 'alarm'
-                        
-                    alarm = make_alarm(None, msg, key, cat)
+                    alarm = make_alarm(None, msg, 'alarm', path=path, category=cat)
                     if notification_data.has_key(key):
                         nd = notification_data[key]
                         paths = nd['paths']
@@ -244,19 +270,20 @@ def check_for_notifications(vessel):
                         alarm['body'] = nd['msg'] % vals
 
                     alarm['timestamp'] = notif['timestamp']
-                    alarm['path'] = 'notifications.%s' % key
                     alarms.append(alarm)
                 else:
-                    last_notifications.pop(key,None)
+                    last_notifications.pop(path,None)
 
     return alarms
 
 def format_n2k_date():
     return time.strftime('%Y-%m-%dT%H:%M.%SZ', time.gmtime())
 
-def publish_alarm(alarm, state='alarm', methods=['visual', 'sound' ]):
+def publish_alarm(alarm, state=None, methods=['visual', 'sound' ]):
     global uuid
     timestamp = format_n2k_date()
+    if not state:
+        state = alarm['state']
     value = {
 	    'state': state,
 	    'timestamp': timestamp
@@ -284,10 +311,12 @@ def publish_alarm(alarm, state='alarm', methods=['visual', 'sound' ]):
         "context":"vessels." + uuid
     }
     local_alarms[alarm['path']] = alarm
+    print 'publish: ', update
     signalk_ws_server.SignalKSocketHandler.send_updates(update)
 
-def clear_alarm(path):
-    if local_alarms.has_key(path):
+def clear_alarm(vessel, path):
+    existing = get_from_path(path, vessel)
+    if existing and existing['state'] != 'normal':
         publish_alarm({ "path": path }, 'normal')
         del local_alarms[path]
 
@@ -304,14 +333,18 @@ def silence_alarm(path):
         pass
     
 def check_alarm(vessel, alarm_config, function, path):
-    alarms = []
-    try:
-        alarms = function(vessel, alarm_config)
-        if len(alarms) == 0:
-            clear_alarm(path)
-    except exceptions.KeyError:
-        pass
+    alarms = function(vessel, alarm_config)
+    if not alarms or len(alarms) == 0:
+        clear_alarm(vessel, path)
+        
     return alarms
+
+def vessel_has_matching_alarm(vessel, alarm):
+    match = get_from_path(alarm['path'], vessel)
+    #print match, alarm
+    if match and match['state'] == alarm['state']:
+        return True
+    return False
 
 def check_for_alarms(vessel):
     alarms = []
@@ -327,29 +360,35 @@ def check_for_alarms(vessel):
     alarms.extend(check_for_notifications(vessel))
 
     for func in alarm_checkers:
-        alarms.extend(check_alarm(vessel, alarm_config, func[0], func[1]))
+        res = check_alarm(vessel, alarm_config, func[0], func[1])
+        if res:
+            alarms.extend(res)
 
     if last_wind != None and last_pitch != None and last_roll != None:
         print "%s - Wind: %0.2f Pitch: %0.2f Roll: %0.2f" % (time.asctime(time.localtime(time.time())), last_wind, last_pitch, last_roll)
 
-    #alarms = []
-
     history = push_server.read_history()
 
     devices = push_server.read_devices()
-    
+
     for alarm in alarms:
-        type = alarm['type']
-        if alarm.has_key('category'):
-            #print last_notification_time
-            #print alarm
-            if last_notifications.has_key(type):
+#        type = alarm['type']
+        path = alarm['path']
+
+        if len(signalk_ws_server.SignalKSocketHandler.waiters) > 0:
+            if vessel_has_matching_alarm(vessel, alarm):
                 continue
-        elif last_alarm_times.has_key(type):
-            last_time = last_alarm_times[type]
-            hour_from = last_time + timedelta(minutes=15)
-            if datetime.now() < hour_from:
-                continue
+        else:
+            if alarm.has_key('category'):
+                if last_notifications.has_key(path):
+                    continue
+        
+            
+            elif last_alarm_times.has_key(path):
+                last_time = last_alarm_times[path]
+                hour_from = last_time + timedelta(minutes=15)
+                if datetime.now() < hour_from:
+                    continue
 
         alarm['date'] = time.strftime('%m/%d %H:%M', time.localtime(time.time()))
         history.append(alarm)
@@ -359,28 +398,27 @@ def check_for_alarms(vessel):
         else:
             category = None
 
-        if alarm.has_key('path'):
-            path = alarm['path']
-        else:
-            path = None
-
         for device in devices.values():
             uuid = None
             if device.has_key('uuid'):
                 uuid = device['uuid']
 
-            push_to_amazon_sns(alarm['title'], alarm['body'],
-                               device['targetArn'], 'us-east-1',
-                               device['accessKey'],
-                               device['secretAccessKey'],
-                               path,
-                               uuid,
-                               category)
+            try:
+                push_to_amazon_sns(alarm['title'], alarm['body'],
+                                   device['targetArn'], 'us-east-1',
+                                   device['accessKey'],
+                                   device['secretAccessKey'],
+                                   path,
+                                   uuid,
+                                   category)
+            except:
+                print("Error sending to Amazon SNS:", sys.exc_info())
+                traceback.print_exc()
 
         if alarm.has_key('category'):
-            last_notifications[type] = alarm
+            last_notifications[path] = alarm
         else:
-            last_alarm_times[type] = datetime.now()
+            last_alarm_times[path] = datetime.now()
 
         if path and alarm['isGenerated']:
             publish_alarm(alarm)
