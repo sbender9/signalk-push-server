@@ -19,18 +19,19 @@ high_wind_alarm = 10.0
 shallow_depth_alarm = 8.0
 ```
 
-Install Amazon's [Boto 3](https://aws.amazon.com/sdk-for-python/) python API's:
+Install tornada and Amazon's [Boto 3](https://aws.amazon.com/sdk-for-python/) python API's:
 
 ```
 pip install boto3
+pip install tornado
 ```
 
-Copy all of the .py files to your server.
+Copy all of the files to a direcrtory on your server.
 Make sure that n2k_writer.py is executable and in your path.
 Run the two servers in the background. 
 ```
-/path/push_server.py > /dev/null 2>&1 &
-/path/signalk_alert_pusher.py > /dev/null 2>&1 &
+/path/signalk_alert_pusher.py
+
 ```
 
 In WilhelmSK, connect to your boat and go to the Notificaion settings. Check the "Enable Notifications" box. (You must be currently connected to your boat for this to work).
