@@ -364,8 +364,8 @@ def check_for_alarms(vessel):
         if res:
             alarms.extend(res)
 
-    if last_wind != None and last_pitch != None and last_roll != None:
-        print "%s - Wind: %0.2f Pitch: %0.2f Roll: %0.2f" % (time.asctime(time.localtime(time.time())), last_wind, last_pitch, last_roll)
+#    if last_wind != None and last_pitch != None and last_roll != None:
+#        print "%s - Wind: %0.2f Pitch: %0.2f Roll: %0.2f" % (time.asctime(time.localtime(time.time())), last_wind, last_pitch, last_roll)
 
     history = push_server.read_history()
 
@@ -454,8 +454,8 @@ def alarm_check_loop():
         
 def start_push_server():
     push_server.start(silence_alarm)
-    
-if __name__ == '__main__':
+
+def main():
     thread = threading.Thread(target = signalk_ws_server.main)
     thread.daemon = True
     thread.start()
@@ -465,3 +465,6 @@ if __name__ == '__main__':
     thread.start()
     
     alarm_check_loop()
+
+if __name__ == '__main__':
+    main()

@@ -34,12 +34,19 @@ default_src = '1'
 autopilot_dst = '204'
 everyone_dst = '255'
 
+n2k_output = None
+
 def format_n2k_date():
     return time.strftime('%Y-%m-%dT%H:%M.%SZ', time.gmtime())
 
 def send(msg):
-    sys.stdout.write(msg + "\r\n")
-    sys.stdout.flush()
+    global n2k_output
+    if n2k_output:
+        out = n2k_output
+    else:
+        out = sys.stdout
+    out.write(msg + "\r\n")
+    out.flush()
 
 def set_autopilot_heading(val):
     send(heading_command % (format_n2k_date(), default_src, autopilot_dst, val & 0xff,
@@ -97,13 +104,18 @@ class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             
         
     def log_message(self, format, *args):
-       pass
-
+        global n2k_output
+        if n2k_output:
+            BaseHTTPServer.BaseHTTPRequestHandler.log_message(self, format, *args)
+        
 class ThreadedHTTPServer(ThreadingMixIn, BaseHTTPServer.HTTPServer):
     """ This class allows to handle requests in separated threads.
     No further content needed, don't touch this. """
-       
-if __name__ == '__main__':
+
+def main(output):
+    global n2k_output
+    if output:
+        n2k_output = output
     server_class = ThreadedHTTPServer
     httpd = server_class((HOST_NAME, PORT_NUMBER), MyHandler)
     try:
@@ -111,3 +123,6 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         pass
     httpd.server_close()
+
+if __name__ == '__main__':
+    main(None)
