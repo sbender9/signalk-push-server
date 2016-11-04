@@ -169,7 +169,7 @@ def check_high_wind(vessel, alarm_config):
     high_wind = alarm_config.get('high_wind',None)
     
     if high_wind != None and high_wind['enabled'] == 1 and kspeed > high_wind['value']:
-      return [make_alarm('High Wind', 'Wind Speed is %0.2f kts' 
+      return [make_alarm('High Wind', 'Wind Speed is %0.0f kts' 
                          % kspeed, 'alert', path='notifications.highWind',
                          isGenerated=True)]
     return None
@@ -342,7 +342,7 @@ def check_alarm(vessel, alarm_config, function, path):
 def vessel_has_matching_alarm(vessel, alarm):
     match = get_from_path(alarm['path'], vessel)
     #print match, alarm
-    if match and match['state'] == alarm['state']:
+    if match and match['state'] == alarm['state'] and alarm['body'] == match['message']:
         return True
     return False
 
