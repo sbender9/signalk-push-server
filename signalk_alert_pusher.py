@@ -452,19 +452,16 @@ def alarm_check_loop():
         sys.stdout.flush()
         time.sleep(2)
         
-def start_push_server():
-    push_server.start(silence_alarm)
-
-def main():
-    thread = threading.Thread(target = signalk_ws_server.main)
+def main(signalk_listen_port):
+    thread = threading.Thread(target = signalk_ws_server.main, args=(signalk_listen_port,))
     thread.daemon = True
     thread.start()
 
-    thread = threading.Thread(target = start_push_server)
+    thread = threading.Thread(target = push_server.start, args=(silence_alarm,))
     thread.daemon = True
     thread.start()
     
     alarm_check_loop()
 
 if __name__ == '__main__':
-    main()
+    main(None)

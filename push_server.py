@@ -186,6 +186,7 @@ def start(callback):
 
     server_class = ThreadedHTTPServer
     httpd = server_class((HOST_NAME, PORT_NUMBER), MyHandler)
+    print time.asctime(), "push_server listening on port %s" % PORT_NUMBER
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:

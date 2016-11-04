@@ -25,7 +25,7 @@ import tornado.options
 import tornado.web
 import tornado.websocket
 import os.path
-import uuid
+import time
 
 from tornado.options import define, options
 
@@ -87,13 +87,16 @@ class SignalKSocketHandler(tornado.websocket.WebSocketHandler):
         logging.info("got message %r", message)
 
 
-def main():
+def main(port):
     logging.basicConfig(level=logging.INFO)
-    tornado.options.parse_command_line()
+    #tornado.options.parse_command_line()
+    if port:
+        options.port = port
     app = Application()
     app.listen(options.port)
+    print time.asctime(), "providing Signalk deltas on port %d" % options.port
     tornado.ioloop.IOLoop.current().start()
 
 
 if __name__ == "__main__":
-    main()
+    main(None)

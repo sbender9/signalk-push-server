@@ -96,6 +96,7 @@ class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         
         if s.path == '/send_delta':
             send_command(dict)
+            s.log_message("send delta: " + json.dumps(dict, sort_keys=True, indent=2))
             s.send_response(200)
         else:
             s.send_response(404)
@@ -118,6 +119,7 @@ def main(output):
         n2k_output = output
     server_class = ThreadedHTTPServer
     httpd = server_class((HOST_NAME, PORT_NUMBER), MyHandler)
+    print time.asctime(), "n2k_writer listening on port %s" % PORT_NUMBER
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
