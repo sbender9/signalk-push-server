@@ -18,7 +18,6 @@ Copy alarm_config.json-sample to alarm_config.json
 You can just run the push server.
 ```
 /path/signalk_alert_pusher.py
-
 ```
 
 Or, instead, if you also want autopilot control, edit your signalk-node-server/bin/actisense-serial-n2kd to look something like:
