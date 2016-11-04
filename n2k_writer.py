@@ -37,8 +37,6 @@ everyone_dst = '255'
 def format_n2k_date():
     return time.strftime('%Y-%m-%dT%H:%M.%SZ', time.gmtime())
 
-#2016-09-06T23:01:42.759Z
-
 def send(msg):
     sys.stdout.write(msg + "\r\n")
     sys.stdout.flush()
@@ -91,16 +89,10 @@ class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         
         if s.path == '/send_delta':
             send_command(dict)
-        elif s.path == '/send':
-            msg = s.rfile.read(int(s.headers['Content-Length']))
-
-            outp  = msg + '\r\n'
-            sys.stdout.write(outp)
-            sys.stdout.flush()
-
-            s.log_message('sent n2k message: %s', msg)
+            s.send_response(200)
+        else:
+            s.send_response(404)
             
-        s.send_response(200)
         s.end_headers()
             
         
