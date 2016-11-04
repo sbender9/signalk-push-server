@@ -28,7 +28,7 @@ Or, instead, if you also want autopilot control, edit your signalk-node-server/b
 
 
 In WilhelmSK, connect to your boat and go to the Notificaion settings. Check the "Enable Notifications" box. (You must be currently connected to your boat for this to work).
-This currently requires the WilhelmSK Beta (1.1.0 build 9+)
+This currently requires the WilhelmSK Beta (1.1.0 build 12+)
 
 
 
