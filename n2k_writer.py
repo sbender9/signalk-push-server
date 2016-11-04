@@ -74,8 +74,8 @@ def send_command(dict):
         for update in dict['updates']:
             if update.has_key('values'):
                 for value in update['values']:
-                    func = function_map[value['path']]
-                    func(value['value'])
+                    if function_map.has_key(value['path']):
+                        function_map[value['path']](value['value'])
                     
 class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     def do_HEAD(s):
