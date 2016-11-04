@@ -1,0 +1,4 @@
+*.pyc
+registerd_devices.json
+anchor_position.json
+alarm_history.json

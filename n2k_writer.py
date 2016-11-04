@@ -31,6 +31,8 @@ raymarine_ttw_Mode = "%s,3,126208,%s,%s,17,01,63,ff,00,f8,04,01,3b,07,03,04,04,8
 raymarine_ttw =      "%s,3,126208,%s,%s,21,00,00,ef,01,ff,ff,ff,ff,ff,ff,04,01,3b,07,03,04,04,6c,05,1a,50"
 
 default_src = '1'
+autopilot_dst = '204'
+everyone_dst = '255'
 
 def format_n2k_date():
     return time.strftime('%Y-%m-%dT%H:%M.%SZ', time.gmtime())
@@ -41,32 +43,42 @@ def send(msg):
     sys.stdout.write(msg + "\r\n")
     sys.stdout.flush()
 
-def set_autopilot_heading(dict):
-    val = dict['angle']
-    send(heading_command % (format_n2k_date(), default_src, dict['dst'], val & 0xff,
+def set_autopilot_heading(val):
+    send(heading_command % (format_n2k_date(), default_src, autopilot_dst, val & 0xff,
                             ((val >> 8) & 0xff)))
 
-def set_autopilot_wind_angle(dict):
-    val = dict['angle']
-    print val
-    send(wind_direction_command % (format_n2k_date(), default_src, dict['dst'], val & 0xff,
+def set_autopilot_wind_angle(val):
+    send(wind_direction_command % (format_n2k_date(), default_src, autopilot_dst, val & 0xff,
                                    ((val >> 8) & 0xff)))
     
-def set_autopilot_state(dict):
-    command = state_commands[dict['value']]
-    send(command % (format_n2k_date(), default_src, dict['dst']))
+def set_autopilot_state(value):
+    command = state_commands[value]
+    send(command % (format_n2k_date(), default_src, autopilot_dst))
 
-def turn_to_waypoint(dict):
-    send(raymarine_ttw_Mode % (format_n2k_date(), default_src, dict['dst']))
-    send(raymarine_ttw % (format_n2k_date(), default_src, dict['dst']))
+def turn_to_waypoint(val):
+    send(raymarine_ttw_Mode % (format_n2k_date(), default_src, autopilot_dst))
+    send(raymarine_ttw % (format_n2k_date(), default_src, autopilot_dst))
 
 def silence_rayarine_alarm(dict):
     msg = raymarine_silence % (format_n2k_date(), default_src, dict['alarmId'], dict['groupId'])
     send(msg)
+
+function_map = {
+    "steering.autopilot.state": set_autopilot_state,
+    "steering.autopilot.target.windAngleApparent": set_autopilot_wind_angle,
+    "steering.autopilot.target.headingMagnetic": set_autopilot_heading,
+    "turn_to_waypoint": turn_to_waypoint,
+    "silence_rayarine_alarm": silence_rayarine_alarm
+}
     
 def send_command(dict):
-    globals()[dict['path']](dict)
-
+    if dict.has_key('updates'):
+        for update in dict['updates']:
+            if update.has_key('values'):
+                for value in update['values']:
+                    func = function_map[value['path']]
+                    func(value['value'])
+                    
 class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     def do_HEAD(s):
         s.send_response(200)
