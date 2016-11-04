@@ -14,23 +14,25 @@ pip install tornado
 
 Copy all of the files to a direcrtory on your server. 
 Copy alarm_config.json-sample to alarm_config.json
-Make sure that n2k_writer.py is executable and in your path.
-Run the push server. 
+
+You can just run the push server.
 ```
 /path/signalk_alert_pusher.py
 
 ```
 
+Or, instead, if you also want autopilot control, edit your signalk-node-server/bin/actisense-serial-n2kd to look something like:
+
+```
+/usr/local/src/signalk-push-server/wilhelm_server.py --log /tmp/wilhelm_server.log | actisense-serial /dev/ttyUSB0 | analyzer -json -si
+```
+
+
 In WilhelmSK, connect to your boat and go to the Notificaion settings. Check the "Enable Notifications" box. (You must be currently connected to your boat for this to work).
-This currently requires the WilhelmSK Beta (1.1.0 build 9)
+This currently requires the WilhelmSK Beta (1.1.0 build 9+)
 
-You can also get NMEA 2000 Raymarine autopilot control and Raymarine/Seatalk Alarms with signalk-node-server by copying the code in  ./signalk-server-node into that project. Make sure you have the latest code from git hub for canboat and signalk-node-server.
 
-Your signalk-node-server/bin/actisense-serial-n2kd should look something like:
 
-```
-n2k_writer.py 2>/dev/null | actisense-serial /dev/ttyUSB0 | analyzer -json -si
-```
 
 ***Please note that this allows anyone with access to port 5000 on your server to send NMEA 2000 messages on your network***
 
